@@ -22,5 +22,4 @@ Enrique Rodríguez Villagomez,09/10/2001,21
 Orlando Javier Flores Mejía,11/08/2002,21
 Andres Ismael Romo Lucio,14/12/1999,23
 Oscar Octavio Rodriguez Villegas,22/04/2004,19
-Jesús Demetrio Ramos Ayala,21/12/2002,20  
-   
+Jesús Demetrio Ramos Ayala,21/12/2002,20
