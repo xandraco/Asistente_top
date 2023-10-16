@@ -44,27 +44,6 @@ def save_data(data):
 registro = load_data()
 
 
-''' def run():
-    rec = listen()
-    print(rec)
-    if 'reproduce' in rec:
-        music = rec.replace('reproduce', '').strip()
-        talk('Reproduciendo' + music)
-        pywhatkit.playonyt(music)
-    
-    elif 'hora' in rec:
-        hora = datetime.datetime.now().strftime('%I:%M %p')
-        talk("Son las " + hora)
-
-    elif any(keyword in rec for keyword in ['enciende', 'prende']):
-        print('Encendido')
-    
-    elif any(keyword in rec for keyword in ['apaga']):
-        print('Apagado')
-    
-    else:
-        talk("Lo siento, no pude escucharte, vuelve a intentarlo...") '''
-
 def run():
     rec = listen()
     print(rec)
