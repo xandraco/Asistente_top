@@ -57,42 +57,63 @@ def check_time(last_time):
     
     return 23.75 <= time_difference.total_seconds() / 3600 <= 24.25
 
+# asigna un id único a cada instrucción
+def get_unique_id():
+    return len(registro) + 1  # Asigna un id único basado en la longitud del registro
+
+def find_instruction(action):
+    for id, data in registro.items():
+        if data['action'] == action:
+            return id
+    return None
+
+def process_instruction(action):
+    # Busca todos los registros con la misma acción
+    matching_ids = [id for id, data in registro.items() if data['action'] == action]
+    
+    if matching_ids:
+        # Si hay registros que coinciden con la acción
+        updated = False
+        for id in matching_ids:
+            if check_time(registro[id]['last_time']):
+                # Si encuentra uno dentro del rango de tiempo, actualiza y rompe el bucle
+                registro[id]['count'] += 1
+                registro[id]['last_time'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                updated = True
+                break
+        
+        if not updated:
+            # Si ninguno cumple con el rango de tiempo, agrega uno nuevo
+            print('Nueva instrucción detectada (fuera de rango de tiempo):', action)
+            new_id = get_unique_id()
+            registro[new_id] = {'action': action, 'count': 1, 'last_time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+    else:
+        # Si no hay registros con la misma acción, agrega uno nuevo
+        print('Nueva instrucción detectada (nueva):', action)
+        id = get_unique_id()
+        registro[id] = {'action': action, 'count': 1, 'last_time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+    save_data(registro)
+
 def run():
     if keyboard.is_pressed('enter'):
-            rec = listen()
-            print(rec)
-            if 'reproduce' in rec:
-                music = rec.replace('reproduce', '').strip()
-                talk('Reproduciendo ' + music)
-                pywhatkit.playonyt(music)
-            
-            elif 'hora' in rec:
-                hora = datetime.datetime.now().strftime('%I:%M %p')
-                talk("Son las " + hora)
-
-            elif any(keyword in rec for keyword in ['enciende', 'prende']):
-                print('Encendido')
-                registro[rec] = registro.get(rec, {'count': 0, 'last_time': None})
-                if check_time(registro[rec]['last_time']):
-                    registro[rec]['count'] += 1
-                    registro[rec]['last_time'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                else:
-                    print('Aún no ha pasado suficiente tiempo desde la última instrucción.')
-
-            elif any(keyword in rec for keyword in ['apaga']):
-                print('Apagado')
-                registro[rec] = registro.get(rec, {'count': 0, 'last_time': None})
-                if check_time(registro[rec]['last_time']):
-                    registro[rec]['count'] += 1
-                    registro[rec]['last_time'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                else:
-                    print('Aún no ha pasado suficiente tiempo desde la última instrucción.')
-            
-            
-            else:
-                talk("Lo siento, no pude escucharte, vuelve a intentarlo...")
-
-            save_data(registro)
+        rec = listen()
+        print(rec)
+        if 'reproduce' in rec:
+            music = rec.replace('reproduce', '').strip()
+            talk('Reproduciendo ' + music)
+            pywhatkit.playonyt(music)
+        elif 'hora' in rec:
+            hora = datetime.datetime.now().strftime('%I:%M %p')
+            talk("Son las " + hora)
+        elif any(keyword in rec for keyword in ['enciende', 'prende']):
+            print('Encendido')
+            process_instruction(rec)
+        elif any(keyword in rec for keyword in ['apaga']):
+            print('Apagado')
+            process_instruction(rec)
+        else:
+            talk("Lo siento, no pude escucharte, vuelve a intentarlo...")
 
 
 while running:
