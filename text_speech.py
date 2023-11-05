@@ -67,33 +67,53 @@ def find_instruction(action):
             return id
     return None
 
+def load_routines():
+    try:
+        with open('rutinas.json', 'r') as file:
+            return json.load(file)
+    except FileNotFoundError:
+        return []
+
+def save_routines(rutinas):
+    with open('rutinas.json', 'w') as file:
+        json.dump(rutinas, file)
+
+rutinas = load_routines()
+
 def process_instruction(action):
-    # Busca todos los registros con la misma acción
     matching_ids = [id for id, data in registro.items() if data['action'] == action]
     
     if matching_ids:
-        # Si hay registros que coinciden con la acción
         updated = False
         for id in matching_ids:
             if check_time(registro[id]['last_time']):
-                # Si encuentra uno dentro del rango de tiempo, actualiza y rompe el bucle
                 registro[id]['count'] += 1
                 registro[id]['last_time'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                if registro[id]['count'] == 3:
+                    print('Instrucción alcanzó un count de 3, guardando en rutinas.json:', action)
+                    rutinas.append({'id': id, 'action': action})
                 updated = True
                 break
         
         if not updated:
-            # Si ninguno cumple con el rango de tiempo, agrega uno nuevo
             print('Nueva instrucción detectada (fuera de rango de tiempo):', action)
             new_id = get_unique_id()
             registro[new_id] = {'action': action, 'count': 1, 'last_time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
     else:
-        # Si no hay registros con la misma acción, agrega uno nuevo
         print('Nueva instrucción detectada (nueva):', action)
         id = get_unique_id()
         registro[id] = {'action': action, 'count': 1, 'last_time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
     save_data(registro)
+    
+    # Guardar rutinas si se alcanza un count de 3
+    for routine in rutinas:
+        if registro[routine['id']]['count'] == 3:
+            routine_data = {'id': routine['id'], 'action': registro[routine['id']]['action']}
+            with open('rutinas.json', 'w') as file:
+                json.dump(rutinas, file)
+            print(f'Guardando rutina con id {routine["id"]} y acción {routine_data["action"]} en rutinas.json.')
+
 
 def run():
     if keyboard.is_pressed('enter'):
