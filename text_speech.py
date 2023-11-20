@@ -1,3 +1,5 @@
+import nltk
+from nltk.corpus import stopwords
 import pyttsx3
 import speech_recognition as sr
 import pywhatkit
@@ -8,6 +10,13 @@ import json
 import keyboard
 
 # Vamos a trabajar sobre esta rama
+
+# se descargan las stopwords si es que no existen
+nltk.download('stopwords')
+
+# se obtienen las stopwords en español
+stop_words = set(stopwords.words('spanish'))
+
 
 aname = ''
 
@@ -27,12 +36,21 @@ def listen():
         with sr.Microphone() as source:
             print("Escuchando...")
             voice = listener.listen(source)
-            rec = listener.recognize_google(voice, language = "es-ES")
+            rec = listener.recognize_google(voice, language="es-ES")
             rec = rec.lower()
+
+            # Eliminar stop words de la transcripción
+            rec = ' '.join([word for word in rec.split() if word.lower() not in stop_words])
+
     except:
         pass
 
     return rec
+
+# Redondeo a los 5 mins más cercanos
+def round_to_nearest_5_minutes(dt):
+    rounded_minutes = round(dt.minute / 5) * 5
+    return dt.replace(minute=rounded_minutes, second=0, microsecond=0)
 
 # Lectura y escritura de datos
 def load_data():
@@ -90,32 +108,41 @@ def process_instruction(action):
         for id in matching_ids:
             if check_time(registro[id]['last_time']):
                 registro[id]['count'] += 1
-                registro[id]['last_time'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+                # Redondear el tiempo al múltiplo de 5 más cercano
+                rounded_time = round_to_nearest_5_minutes(datetime.datetime.now())
+                registro[id]['last_time'] = rounded_time.strftime('%Y-%m-%d %H:%M:%S')
+
                 if registro[id]['count'] == 3:
-                    print('Instrucción alcanzó un count de 3, guardando en rutinas.json:', action)
-                    rutinas.append({'id': id, 'action': action})
+                    existing_routine = next((routine for routine in rutinas if routine['id'] == id), None)
+                    if existing_routine is None:
+                        print('Instrucción alcanzó un count de 3, guardando en rutinas.json:', action)
+                        rutinas.append({'id': id, 'action': action, 'last_time': rounded_time.strftime('%Y-%m-%d %H:%M:%S')})
                 updated = True
                 break
         
         if not updated:
             print('Nueva instrucción detectada (fuera de rango de tiempo):', action)
             new_id = get_unique_id()
-            registro[new_id] = {'action': action, 'count': 1, 'last_time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+            rounded_time = round_to_nearest_5_minutes(datetime.datetime.now())
+            registro[new_id] = {'action': action, 'count': 1, 'last_time': rounded_time.strftime('%Y-%m-%d %H:%M:%S')}
     else:
         print('Nueva instrucción detectada (nueva):', action)
         id = get_unique_id()
-        registro[id] = {'action': action, 'count': 1, 'last_time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+        rounded_time = round_to_nearest_5_minutes(datetime.datetime.now())
+        registro[id] = {'action': action, 'count': 1, 'last_time': rounded_time.strftime('%Y-%m-%d %H:%M:%S')}
 
     save_data(registro)
     
     # Guardar rutinas si se alcanza un count de 3
     for routine in rutinas:
         if registro[routine['id']]['count'] == 3:
-            routine_data = {'id': routine['id'], 'action': registro[routine['id']]['action']}
-            with open('rutinas.json', 'w') as file:
-                json.dump(rutinas, file)
-            print(f'Guardando rutina con id {routine["id"]} y acción {routine_data["action"]} en rutinas.json.')
-
+            routine_data = {'id': routine['id'], 'action': registro[routine['id']]['action'], 'last_time': registro[routine['id']]['last_time']}
+            existing_routine = next((r for r in rutinas if r['id'] == routine['id']), None)
+            if existing_routine is None:
+                with open('rutinas.json', 'w') as file:
+                    json.dump(rutinas, file)
+                print(f'Guardando rutina con id {routine["id"]} y acción {routine_data["action"]} en rutinas.json.')
 
 def run():
     if keyboard.is_pressed('enter'):
