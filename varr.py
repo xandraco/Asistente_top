@@ -39,7 +39,6 @@ def listen():
             rec = ' '.join([word for word in rec.split() if word.lower() not in stop_words])
 
     except:
-        print(f"Error in listen(): {e}")
         pass
 
     return rec

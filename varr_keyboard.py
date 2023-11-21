@@ -91,7 +91,6 @@ def edit_routine():
     talk('Claro, ¿cuál rutina quieres cambiar?')
     rec = input("Escuchando... : ")
     # Remove stop words
-    rec = ' '.join([word for word in rec.split() if word.lower() not in stop_words])
     print(rec)
 
     # Map spoken words to numeric values
@@ -224,7 +223,6 @@ def delete_routine():
     talk('Claro, ¿cuál es el ID de la rutina que quieres eliminar?')
     rec = input("Escuchando... : ")
     # Remove stop words
-    rec = ' '.join([word for word in rec.split() if word.lower() not in stop_words])
     print(rec)
 
     # Map spoken words to numeric values
