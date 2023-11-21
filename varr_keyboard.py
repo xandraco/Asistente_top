@@ -1,7 +1,6 @@
 import nltk
 from nltk.corpus import stopwords
 import pyttsx3
-import speech_recognition as sr
 import pywhatkit
 import datetime
 import json
@@ -13,10 +12,8 @@ import os
 # se obtienen las stopwords en español
 stop_words = set(stopwords.words('spanish'))
 
-
 aname = ''
 
-listener = sr.Recognizer()
 engine = pyttsx3.init()
 voices = engine.getProperty('voices')
 engine.setProperty('voice', voices[0].id)
@@ -26,23 +23,6 @@ running = True
 def talk(text):
     engine.say(text)
     engine.runAndWait()
-
-def listen():
-    try:
-        with sr.Microphone() as source:
-            print("Escuchando...")
-            voice = listener.listen(source, timeout = 5)
-            rec = listener.recognize_google(voice, language="es-ES")
-            rec = rec.lower()
-
-            # Eliminar stop words de la transcripción
-            rec = ' '.join([word for word in rec.split() if word.lower() not in stop_words])
-
-    except:
-        print(f"Error in listen(): {e}")
-        pass
-
-    return rec
 
 # Redondeo a los 5 mins más cercanos
 def round_to_nearest_5_minutes(dt):
@@ -109,7 +89,9 @@ def save_routines(rutinas):
 
 def edit_routine():
     talk('Claro, ¿cuál rutina quieres cambiar?')
-    rec = listen()
+    rec = input("Escuchando... : ")
+    # Remove stop words
+    rec = ' '.join([word for word in rec.split() if word.lower() not in stop_words])
     print(rec)
 
     # Map spoken words to numeric values
@@ -216,6 +198,7 @@ def edit_routine():
         'cien': 100
     }
 
+
     # Check if the spoken word is in the mapping
     if rec.lower() in number_mapping:
         routine_id_str = number_mapping[rec.lower()]
@@ -224,7 +207,9 @@ def edit_routine():
 
         if found_routine:
             talk(f'¿Qué quieres que se haga ahora en la rutina "{found_routine["action"]}"?')
-            rec = listen()
+            rec = input("Escuchando... : ")
+            # Remove stop words
+            rec = ' '.join([word for word in rec.split() if word.lower() not in stop_words])
 
             # Update the routine with the new action
             found_routine['action'] = rec
@@ -237,7 +222,9 @@ def edit_routine():
 
 def delete_routine():
     talk('Claro, ¿cuál es el ID de la rutina que quieres eliminar?')
-    rec = listen()
+    rec = input("Escuchando... : ")
+    # Remove stop words
+    rec = ' '.join([word for word in rec.split() if word.lower() not in stop_words])
     print(rec)
 
     # Map spoken words to numeric values
@@ -343,6 +330,7 @@ def delete_routine():
         'noventa y nueve': 99,
         'cien': 100
     }
+
 
     # Check if the spoken word is in the mapping
     if rec.lower() in number_mapping:
@@ -397,27 +385,26 @@ def process_instruction(action):
 
     save_data(registro)
 
-
 def run():
-    if keyboard.is_pressed('enter'):
-        rec = listen()
-        print(rec)
-        if any(keyword in rec for keyword in ['enciende', 'prende', 'apaga','prepara', 'hazme']):
-            talk('Okey')
-            print('Listo')
-            process_instruction(rec)
-        elif any(keyword in rec for keyword in ['muestrame rutinas', 'dime cuáles rutinas', 'dime rutinas', 'cuáles rutinas']):
-            talk('Claro')
-            for routine in rutinas:
-                print(f'ID: {routine["id"]}, Acción: {routine["action"]}, Hora: {routine["hour"]}')
-                talk(f'ID: {routine["id"]}, Acción: {routine["action"]}, Hora: {routine["hour"]}')
-        elif any(keyword in rec for keyword in ['cambiar rutina', 'modificar rutina', 'actualizar rutina', 'actualiza rutina', 'cambia rutina','modifica rutina', 'editar rutinas', 'editar rutina', 'edita rutinas', 'edita rutina']):
-            edit_routine()
-        elif any(keyword in rec for keyword in ['eliminar rutina', 'borrar rutina', 'quitar rutina', 'elimina rutina', 'borra rutina', 'quita rutina']):
-            delete_routine()
-        else:
-            talk("Lo siento, no pude escucharte, vuelve a intentarlo...")
-
+    rec = input("Escuchando... : ")
+    # Remove stop words
+    rec = ' '.join([word for word in rec.split() if word.lower() not in stop_words])
+    print(rec)
+    if any(keyword in rec for keyword in ['enciende', 'prende', 'apaga', 'prepara', 'hazme']):
+        talk('Okey')
+        print('Listo')
+        process_instruction(rec)
+    elif any(keyword in rec for keyword in ['muestrame rutinas', 'dime cuáles rutinas', 'dime rutinas', 'cuáles rutinas']):
+        talk('Claro')
+        for routine in rutinas:
+            print(f'ID: {routine["id"]}, Acción: {routine["action"]}, Hora: {routine["hour"]}')
+            talk(f'ID: {routine["id"]}, Acción: {routine["action"]}, Hora: {routine["hour"]}')
+    elif any(keyword in rec for keyword in ['cambiar rutina', 'modificar rutina', 'actualizar rutina', 'actualiza rutina', 'cambia rutina', 'modifica rutina', 'editar rutinas', 'editar rutina', 'edita rutinas', 'edita rutina']):
+        edit_routine()
+    elif any(keyword in rec for keyword in ['eliminar rutina', 'borrar rutina', 'quitar rutina', 'elimina rutina', 'borra rutina', 'quita rutina']):
+        delete_routine()
+    else:
+        talk("Lo siento, no pude escucharte, vuelve a intentarlo...")
 
 while running:
     run()

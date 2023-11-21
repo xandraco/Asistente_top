@@ -1,1 +1,1 @@
-[{"id": "1", "action": "enciende luz oficina", "hour": "16:55"}, {"id": "2", "action": "enciende luz patio", "hour": "17:00"}]
+[{"id": 1, "action": "enciende luz oficina", "hour": "16:55"}, {"id": 2, "action": "enciende luz patio", "hour": "17:00"}, {"id": 3, "action": "enciende luz cocina", "hour": "11:45"}]
